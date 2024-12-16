@@ -256,19 +256,19 @@ def draw_piano(root):
     piano_grid = tk.Frame(root, bg="black", bd=20)
     piano_grid.grid(row=0, column=0, padx=20)
 
-    key_c = tk.Button(piano_grid, height=8, width=4, bd=4, text="C", bg="red", fg="black", command=lambda: ss())
+    key_c = tk.Button(piano_grid, height=8, width=4, bd=4, text="C", bg="red", fg="black", command=lambda: servo_c.play_note(0.5))
     key_c.grid(row=0, column=0, padx=1, pady=1)
 
-    key_d = tk.Button(piano_grid, height=8, width=4, bd=4, text="D", bg="orange", fg="black", command=lambda: ss())
+    key_d = tk.Button(piano_grid, height=8, width=4, bd=4, text="D", bg="orange", fg="black", command=lambda: servo_d.play_note(0.5))
     key_d.grid(row=0, column=1, padx=1, pady=1)
 
-    key_e = tk.Button(piano_grid, height=8, width=4, bd=4, text="E", bg="yellow", fg="black", command=lambda: ss())
+    key_e = tk.Button(piano_grid, height=8, width=4, bd=4, text="E", bg="yellow", fg="black", command=lambda: servo_e.play_note(0.5))
     key_e.grid(row=0, column=2, padx=1, pady=1)
 
-    key_f = tk.Button(piano_grid, height=8, width=4, bd=4, text="F", bg="green", fg="black", command=lambda: ss())
+    key_f = tk.Button(piano_grid, height=8, width=4, bd=4, text="F", bg="green", fg="black", command=lambda: servo_f.play_note(0.5))
     key_f.grid(row=0, column=3, padx=1, pady=1)
 
-    key_g = tk.Button(piano_grid, height=8, width=4, bd=4, text="G", bg="cyan", fg="black", command=lambda: ss())
+    key_g = tk.Button(piano_grid, height=8, width=4, bd=4, text="G", bg="cyan", fg="black", command=lambda: servo_g.play_note(0.5))
     key_g.grid(row=0, column=4, padx=1, pady=1)
 
 
