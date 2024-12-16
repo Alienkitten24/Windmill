@@ -5,15 +5,17 @@ import time
 import threading
 import RPi.GPIO as GPIO
 
+# gate servos that release marbles individually
 class release_servo():
 
     def __init__(self, pin, number, closed_angle, open_angle):
         self.pin = pin # GPIO pin
-        self.number = number # the ordering of the servo
+        self.number = number # the ordering of the servo (for each note)
 
-        self.closed_angle = closed_angle
-        self.open_angle = open_angle
+        self.closed_angle = closed_angle # gate closed
+        self.open_angle = open_angle # gate open
 
+        # convert to duty cycle
         self.closed_dc = (closed_angle+2)/20
         self.open_dc = (open_angle+2)/20
 
@@ -23,7 +25,7 @@ class release_servo():
         sleep(0.5)
 
     def release_marble(self):
-
+        # open gate then close it again
         self.pwm.ChangeDutyCycle(self.closed_dc)
         sleep(0.5)
         self.pwm.ChangeDutyCycle(self.open_dc)
@@ -42,6 +44,7 @@ class release_servo():
     def stop(self):
         self.pwm.stop()
 
+# range finder to detect when marble passes
 class range_finder():
 
     def __init__(self, trigger_pin, echo_pin, selector_servo):
@@ -50,13 +53,12 @@ class range_finder():
         self.selector_servo = selector_servo # selector servo that listens for when range finder goes off
         self.running = False
 
-        GPIO.setup(self.trigger_pin, GPIO.OUT) # trigger
-        GPIO.setup(self.echo_pin, GPIO.IN) # echo
+        GPIO.setup(self.trigger_pin, GPIO.OUT) 
+        GPIO.setup(self.echo_pin, GPIO.IN) 
 
         GPIO.output(self.trigger_pin, 0)
 
     def pulse_trigger(self):
-        print('send pulse')
         GPIO.output(self.trigger_pin, 1)
         sleep(10 * 10**(-6))
         GPIO.output(self.trigger_pin, 0)
@@ -76,8 +78,7 @@ class range_finder():
         duration = duration * 10**(6)
         distance_cm = duration/58
 
-        print(distance_cm)
-
+        # if marble was detected
         if distance_cm > 2 and distance_cm < 8:
             print(distance_cm)
             return True
@@ -100,6 +101,7 @@ class range_finder():
         if self.thread.is_alive():
             self.thread.join()
 
+# servo to change marble track
 class selector_servo():
 
     def __init__(self, pin, max_tracks=4):
@@ -118,7 +120,8 @@ class selector_servo():
         initial = 0
         self.cur_track = (self.cur_track + 1) % self.max_tracks
 
-        # change angle
+        # initially change anlge for each gate to fill all gates with some supply
+        # then change to filling gates that were recently played
         if initial < 5:
             angle = 30 + 30*self.cur_track
             angle_to_dc = (angle*11)/297 + 2
@@ -138,12 +141,11 @@ class selector_servo():
             self.pwm.ChangeDutyCycle(angle_to_dc)
             sleep(1)
 
-
-
     def stop(self):
         self.pwm.stop()
 
 
+# main dc motor driving windmill and archimedes screw
 class motor():
 
     def __init__(self, pin1, pin2, rpm=0):
@@ -172,10 +174,7 @@ class motor():
             GPIO.output(self.pin1, 0)
             GPIO.output(self.pin2, 1)
 
-    # def change_direction(self, dir_change):
-        # dir_change = 0 cw to ccw
-        # dir_change = 1 ccw to cw
-
+# the GUI elements hat show the windmill spinning
 class gui_blades():
     def __init__(self, root, motor):
         self.root = root
@@ -221,8 +220,8 @@ class gui_blades():
         return rotated_coords
 
     def update_rectangle(self):
-        self.angle += motor.rpm * 0.1# Increment the angle for rotation
-
+        self.angle += motor.rpm * 0.1
+        
         # Delete only the rectangles (not the circle)
         self.canvas.delete("blade")  # Delete elements tagged as "rect"
 
@@ -237,6 +236,12 @@ class gui_blades():
         self.root.after(50, self.update_rectangle)
 
 
+
+# ---------------------------------------
+# begin class main
+# --------------------------------------
+
+# draw the RPM slider gui element
 def draw_slider(root, motor):
     def update_motor_rpm(value):
         motor.change_rpm(int(slider.get()))
@@ -246,9 +251,7 @@ def draw_slider(root, motor):
     slider.grid(row=1, column=0, columnspan=2, pady=10)
     angle = 0
 
-
-
-
+# draw the note selector
 def draw_piano(root):
     piano_grid = tk.Frame(root, bg="black", bd=20)
     piano_grid.grid(row=0, column=0, padx=20)
@@ -268,6 +271,7 @@ def draw_piano(root):
     key_g = tk.Button(piano_grid, height=8, width=4, bd=4, text="G", bg="cyan", fg="black", command=lambda: ss())
     key_g.grid(row=0, column=4, padx=1, pady=1)
 
+
 if __name__ == "__main__":
 
     GPIO.setmode(GPIO.BCM)
@@ -283,14 +287,14 @@ if __name__ == "__main__":
     frame = tk.Frame(root, bg='lightblue')
     frame.grid(row=0,column=0)
 
-    # servo_c = release_servo(27, 5, 110, 0)
-    # servo_d = release_servo(17, 4, 0, 90)
-    # servo_e = release_servo(4, 3, 0, 120)
-    # servo_f = release_servo(3, 2, 0, 90)
-    # servo_g = release_servo(2, 1, 0, 90)
+    servo_c = release_servo(27, 5, 110, 0)
+    servo_d = release_servo(17, 4, 0, 90)
+    servo_e = release_servo(4, 3, 0, 120)
+    servo_f = release_servo(3, 2, 0, 90)
+    servo_g = release_servo(2, 1, 0, 90)
 
     ss = selector_servo(26)
-    # rf = range_finder(5, 6, ss)
+    rf = range_finder(5, 6, ss)
 
     motor = motor(0, 7, 8)
 
@@ -303,6 +307,6 @@ if __name__ == "__main__":
     root.mainloop()
 
 
-    # servo.stop()
+    servo.stop()
     rf.stop()
     GPIO.cleanup()
